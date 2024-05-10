@@ -71,10 +71,11 @@ def busca_a_estrela(inicio, destino):
         
         if no_atual == destino:  # Se o nó atual for o destino, retorna o caminho
             caminho = []
+            custo_total = custo_atual[destino]
             while no_atual is not None:  # Reconstrói o caminho percorrendo os nós anteriores
                 caminho.append(no_atual)
                 no_atual = veio_de[no_atual]
-            return caminho[::-1]  # Inverte o caminho e retorna
+            return caminho[::-1], custo_total # Inverte o caminho e retorna junto com o custo total
         
         for vizinho, custo in grafo[no_atual].items():  # Para cada vizinho do nó atual
             custo_novo = custo_atual[no_atual] + custo  # Calcula o novo custo até o vizinho
@@ -91,24 +92,30 @@ def busca_gulosa(inicio, destino):
     # Inicialização das estruturas de dados
     fila_de_prioridade.put((heuristica[inicio], inicio))  # Adiciona o nó inicial à fila com sua heurística como prioridade
     nos_explorados = set()  # Conjunto para armazenar nós já explorados
+    custo_total = 0  # Inicializa o custo total
     caminho = []  # Lista para armazenar o caminho do nó inicial ao objetivo
+    veio_de = {}  # Dicionário para armazenar o nó anterior de cada nó no caminho
 
     while not fila_de_prioridade.empty():
-        no_atual = fila_de_prioridade.get()[1]  # Obtém o nó com a menor heurística da fila
+        custo_heuristica, no_atual = fila_de_prioridade.get()   # Obtém o nó com a menor heurística da fila
 
         if no_atual == destino:  # Verifica se o nó atual é o objetivo
-            caminho.append(no_atual)  # Adiciona o nó objetivo ao caminho
-            return caminho  # Retorna o caminho encontrado
+            caminho = [no_atual]  # Adiciona o nó objetivo ao caminho
+            while no_atual != inicio:  # Reconstrói o caminho percorrendo os nós anteriores
+                caminho.append(veio_de[no_atual])
+                custo_total += grafo[no_atual][veio_de[no_atual]]  # Soma o custo do caminho em milhas
+                no_atual = veio_de[no_atual]
+            return caminho[::-1], custo_total  # Inverte o caminho e retorna junto com o custo total em milhas
 
         nos_explorados.add(no_atual)  # Marca o nó atual como explorado
-        caminho.append(no_atual)  # Adiciona o nó atual ao caminho
 
         # Explora os vizinhos do nó atual
-        for vizinho in grafo[no_atual]:
+        for vizinho, custo in grafo[no_atual].items():
             if vizinho not in nos_explorados:  # Verifica se o vizinho não foi explorado
+                veio_de[vizinho] = no_atual  # Atualiza o nó atual como anterior do vizinho
                 fila_de_prioridade.put((heuristica[vizinho], vizinho))  # Adiciona o vizinho à fila com sua heurística como prioridade
                 nos_explorados.add(vizinho)  # Marca o vizinho como explorado
-    return None  # Retorna None se não encontrar um caminho até o objetivo
+    return None, None  # Retorna None se não encontrar um caminho até o objetivo
 
 # Teste do algoritmo
 inicio = 'Arad'
@@ -119,6 +126,7 @@ resultado_gulosa = busca_gulosa(inicio,destino)
 if resultado_a_estrela:
     print(f' \n A*: \n Existe caminho de {inicio} até {destino}!')
     print(f'{resultado_a_estrela}\n')
+    print
 else:
     print(f' \n A*: \n Não existe caminho de {inicio} até {destino}. \n ')
 
